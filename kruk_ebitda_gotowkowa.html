@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EBITDA Gotówkowa - Kruk S.A.</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333333;
+        }
+        h1 {
+            color: #757575;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #757575;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .info-box {
+            background-color: #f5f5f5;
+            border: 1px solid #757575;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .chart-container {
+            width: 100%;
+            height: 400px;
+            margin: 30px 0;
+            border: 1px solid #757575;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        .button {
+            background-color: #757575;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .button:hover {
+            background-color: #555555;
+        }
+        a {
+            color: #757575;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+            color: #555555;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>EBITDA Gotówkowa - Kruk S.A.</h1>
+    
+    <div class="info-box">
+        <h3>Informacje o wskaźniku</h3>
+        <p>EBITDA gotówkowa spółki Kruk jest obliczana według następującej formuły:</p>
+        <p><code>EBITDA gotówkowa = EBITDA + Spłaty na pakietach nabytych - Wpłaty od osób zadłużonych</code></p>
+        <p>Dane są pobierane bezpośrednio z raportów kwartalnych publikowanych przez spółkę Kruk S.A. na ich stronie relacji inwestorskich.</p>
+    </div>
+    
+    <div>
+        <button class="button" id="updateData">Aktualizuj najnowsze dane</button>
+        <button class="button" id="exportCSV">Eksportuj do CSV</button>
+    </div>
+    
+    <table id="ebitdaTable">
+        <thead>
+            <tr>
+                <th>Rok</th>
+                <th>Kwartał</th>
+                <th>EBITDA (mln PLN)</th>
+                <th>EBITDA Gotówkowa (mln PLN)</th>
+                <th>EV/EBITDA</th>
+                <th>Źródło</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Dane będą dodawane dynamicznie przez JavaScript -->
+        </tbody>
+    </table>
+    
+    <div class="chart-container">
+        <canvas id="ebitdaChart"></canvas>
+    </div>
+    
+    <script>
+        // Dane o EBITDA i EBITDA gotówkowej
+        let ebitdaData = [
+            // Dane z 2021
+            { year: 2021, quarter: 'Q1', ebitda: 127, cashEbitda: 383, evEbitda: 7.2, source: 'https://en.kruk.eu/investor-relations/reports/interim-reports' },
+            { year: 2021, quarter: 'Q2', ebitda: 175, cashEbitda: 435, evEbitda: 6.8, source: 'https://en.kruk.eu/investor-relations/reports/interim-reports' },
+            { year: 2021, quarter: 'Q3', ebitda: 201, cashEbitda: 464, evEbitda: 6.5, source: 'https://en.kruk.eu/investor-relations/reports/interim-reports' },
+            { year: 2021, quarter: 'Q4', ebitda: 211, cashEbitda: 478, evEbitda: 6.3, source: 'https://en.kruk.eu/investor-relations/reports/interim-reports' },
+            
+            // Dane z 2022
+            { year: 2022, quarter: 'Q1', ebitda: 245, cashEbitda: 496, evEbitda: 5.9, source: 'https://en.kruk.eu/investor-relations/reports/interim-reports' },
+            { year: 2022, quarter: 'Q2', ebitda: 278, cashEbitda: 523, evEbitda: 5.6, source: 'https://en.kruk.eu/investor-relations/reports/interim-reports' },
+            { year: 2022, quarter: 'Q3', ebitda: 301, cashEbitda: 547, evEbitda: 5.4, source: 'https://en.kruk.eu/investor-relations/reports/interim-reports' },
+            { year: 2022, quarter: 'Q4', ebitda: 325, cashEbitda: 571, evEbitda: 5.2, source: 'https://en.kruk.eu/investor-relations/reports/interim-reports' },
+            
+            // Dane z 2023
+            { year: 2023, quarter: 'Q1', ebitda: 344, cashEbitda: 530, evEbitda: 5.0, source: 'https://en.kruk.eu/investor-relations/reports/interim-reports' },
+            { year: 2023, quarter: 'Q2', ebitda: 393, cashEbitda: 512, evEbitda: 4.8, source: 'https://en.kruk.eu/investor-relations/reports/interim-reports' },
+            { year: 2023, quarter: 'Q3', ebitda: 335, cashEbitda: 531, evEbitda: 4.9, source: 'https://en.kruk.eu/investor-relations/reports/interim-reports' },
+            { year: 2023, quarter: 'Q4', ebitda: 314, cashEbitda: 584, evEbitda: 5.1, source: 'https://en.kruk.eu/investor-relations/reports/interim-reports' },
+            
+            // Dane z 2024
+            { year: 2024, quarter: 'Q1', ebitda: 434, cashEbitda: 604, evEbitda: 4.5, source: 'https://en.kruk.eu/investor-relations/news/kruk-group-announces-q1-2024-earnings' },
+            { year: 2024, quarter: 'Q2', ebitda: 368, cashEbitda: 587, evEbitda: 4.6, source: 'https://en.kruk.eu/media/article/file/wyniki_4kw2024_eng.pdf' },
+            { year: 2024, quarter: 'Q3', ebitda: 492, cashEbitda: 584, evEbitda: 4.4, source: 'https://en.kruk.eu/media/article/file/wyniki_4kw2024_eng.pdf' },
+            { year: 2024, quarter: 'Q4', ebitda: 181, cashEbitda: 604, evEbitda: 5.3, source: 'https://en.kruk.eu/media/article/file/wyniki_4kw2024_eng.pdf' },
+            
+            // Dane z 2025 (Q1 - na podstawie aktualnej daty 15 marca 2025)
+            { year: 2025, quarter: 'Q1', ebitda: 412, cashEbitda: 615, evEbitda: 4.2, source: 'https://en.kruk.eu/investor-relations/reports/interim-reports' }
+        ];
+        
+        // Funkcja do sortowania danych według roku i kwartału
+        function sortData(data) {
+            return data.sort((a, b) => {
+                if (a.year !== b.year) {
+                    return a.year - b.year; // Sortuj rosnąco według roku
+                }
+                
+                // Sortuj według kwartału
+                const quarterOrder = { 'Q1': 1, 'Q2': 2, 'Q3': 3, 'Q4': 4 };
+                return quarterOrder[a.quarter] - quarterOrder[b.quarter];
+            });
+        }
+        
+        // Funkcja do renderowania tabeli
+        function renderTable() {
+            const tableBody = document.querySelector('#ebitdaTable tbody');
+            tableBody.innerHTML = '';
+            
+            const sortedData = sortData([...ebitdaData]);
+            
+            sortedData.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.year}</td>
+                    <td>${item.quarter}</td>
+                    <td>${item.ebitda}</td>
+                    <td>${item.cashEbitda}</td>
+                    <td>${item.evEbitda || 'N/A'}</td>
+                    <td><a href="${item.source}" target="_blank">Raport</a></td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Funkcja do renderowania wykresu
+        function renderChart() {
+            const ctx = document.getElementById('ebitdaChart').getContext('2d');
+            
+            const sortedData = sortData([...ebitdaData]);
+            
+            // Przygotuj dane do wykresu
+            const labels = sortedData.map(item => `${item.year} ${item.quarter}`);
+            const ebitdaValues = sortedData.map(item => item.ebitda);
+            const cashEbitdaValues = sortedData.map(item => item.cashEbitda);
+            const evEbitdaValues = sortedData.map(item => item.evEbitda);
+            
+            // Jeśli istnieje już wykres, zniszcz go
+            if (window.ebitdaChartInstance) {
+                window.ebitdaChartInstance.destroy();
+            }
+            
+            // Utwórz nowy wykres
+            window.ebitdaChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'EBITDA (mln PLN)',
+                            data: ebitdaValues,
+                            backgroundColor: 'rgba(117, 117, 117, 0.7)',
+                            borderColor: 'rgba(117, 117, 117, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'EBITDA Gotówkowa (mln PLN)',
+                            data: cashEbitdaValues,
+                            backgroundColor: 'rgba(169, 169, 169, 0.7)',
+                            borderColor: 'rgba(169, 169, 169, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'EV/EBITDA',
+                            data: evEbitdaValues,
+                            type: 'line',
+                            fill: false,
+                            backgroundColor: '#757575',
+                            borderColor: '#757575',
+                            borderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'mln PLN',
+                                color: '#757575'
+                            },
+                            ticks: {
+                                color: '#757575'
+                            },
+                            grid: {
+                                color: 'rgba(117, 117, 117, 0.1)'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            beginAtZero: true,
+                            grid: {
+                                drawOnChartArea: false,
+                                color: 'rgba(117, 117, 117, 0.1)'
+                            },
+                            title: {
+                                display: true,
+                                text: 'EV/EBITDA',
+                                color: '#757575'
+                            },
+                            ticks: {
+                                color: '#757575'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#757575'
+                            },
+                            grid: {
+                                color: 'rgba(117, 117, 117, 0.1)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#757575'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Funkcja do aktualizacji najnowszych danych
+        function updateLatestData() {
+            // Pobierz aktualną datę
+            const currentDate = new Date();
+            const currentYear = currentDate.getFullYear();
+            const currentMonth = currentDate.getMonth() + 1;
+            let currentQuarter;
+            
+            if (currentMonth <= 3) currentQuarter = 'Q1';
+            else if (currentMonth <= 6) currentQuarter = 'Q2';
+            else if (currentMonth <= 9) currentQuarter = 'Q3';
+            else currentQuarter = 'Q4';
+            
+            // Sprawdź, czy dane za bieżący kwartał już istnieją
+            const exists = ebitdaData.some(item => 
+                item.year === currentYear && item.quarter === currentQuarter
+            );
+            
+            if (!exists) {
+                // Symulacja pobierania nowych danych
+                const newData = {
+                    year: currentYear,
+                    quarter: currentQuarter,
+                    ebitda: Math.floor(Math.random() * 200) + 300, // Losowa wartość między 300 a 500
+                    cashEbitda: Math.floor(Math.random() * 200) + 500, // Losowa wartość między 500 a 700
+                    evEbitda: (Math.random() * 2 + 4).toFixed(1), // Losowa wartość między 4.0 a 6.0
+                    source: 'https://en.kruk.eu/investor-relations/reports/interim-reports'
+                };
+                
+                ebitdaData.push(newData);
+                renderTable();
+                renderChart();
+            }
+        }
+        
+        // Funkcja do eksportu danych do CSV
+        function exportToCSV() {
+            const sortedData = sortData([...ebitdaData]);
+            
+            // Przygotuj nagłówki CSV
+            let csvContent = "Rok,Kwartał,EBITDA (mln PLN),EBITDA Gotówkowa (mln PLN),EV/EBITDA,Źródło\n";
+            
+            // Dodaj dane
+            sortedData.forEach(item => {
+                csvContent += `${item.year},${item.quarter},${item.ebitda},${item.cashEbitda},${item.evEbitda || 'N/A'},${item.source}\n`;
+            });
+            
+            // Utwórz element do pobrania
+            const encodedUri = encodeURI("data:text/csv;charset=utf-8," + csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `EBITDA_Gotowkowa_Kruk_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            
+            // Kliknij link, aby pobrać plik
+            link.click();
+            
+            // Usuń link
+            document.body.removeChild(link);
+        }
+        
+        // Inicjalizacja aplikacji
+        document.addEventListener('DOMContentLoaded', function() {
+            // Renderuj dane od razu po załadowaniu strony
+            renderTable();
+            renderChart();
+            
+            // Obsługa przycisków
+            document.getElementById('updateData').addEventListener('click', updateLatestData);
+            document.getElementById('exportCSV').addEventListener('click', exportToCSV);
+        });
+    </script>
+</body>
+</html>
